@@ -8,11 +8,11 @@ execute:
   message: false
 
 book:
-  title: "YOUR PROJECT TITLE"
+  title: "NYC Housing Affordability and Vacancy Pattern Exploratory Data Analysis"
   author:
-    - AUTHOR1 (UNI1)
-    - AUTHOR2 (UNI2)
-  repo-url: https://github.com/YOUR_GITHUB_ACCOUNT/REPO_NAME
+    - Serena Cheng (yc4746)
+    - David Dai (zd2291)
+  repo-url: https://github.com/CserYe03na/HousingAffordability
   date: today
   page-footer:
     right: |
