@@ -434,8 +434,9 @@ hh_df <- hh_df |>
 
 
 ```{r}
-#| fig-width: 18
-#| fig-height: 15
+
+#| fig-width: 20
+#| fig-height: 18
 
 df_cat <- hh_df |>
   select(rent_bracket, hh_race, age_group, hh_type, income_bracket) |>
@@ -564,6 +565,10 @@ plot_df <- combined23 |>
 
 ```{r}
 # Plot4.1: Housing cost burden by owner and renter
+
+#| fig-width: 12
+#| fig-height: 10
+
 plot_df$cost_burden <- factor(
   plot_df$cost_burden,
   levels = c(
@@ -618,12 +623,12 @@ plot_df_owner <- owner23 |>
     pct = wt / sum(wt)
   ) |>
   ungroup()
-
-plot_df_owner
 ```
 
 ```{r}
 # Plot4.2: housing burden vs. household income for owner
+#| fig-width: 12
+#| fig-height: 10
 ggplot(plot_df_owner,
        aes(x = income_bracket, y = pct, group = cost_burden)) +
   geom_line(aes(color = cost_burden), size = 1.3) +
@@ -653,7 +658,9 @@ ggplot(plot_df_owner,
   )
 ```
 Across income groups, both charts show a very similar overall pattern: as household income increases, the share of households experiencing severe cost burden drops sharply, while the share of households who are not burdened rises. This suggests that income is the primary factor shaping housing affordability for both renters and owners. However, when we compare the two groups more closely, we observe an important difference: at every income level, owners with mortgages face much lower severe cost burden rates than renters.
+
 This gap implies that owning a home, even with a mortgage, generally provides more stability and protection against extreme housing cost stress. Homeowners benefit from more predictable payments and may have locked in lower mortgage rates, while renters are exposed to faster rent increases and market volatility. At the same time, moderate burden levels stay relatively stable across income for both groups, suggesting that the main shift with higher income is not a reduction in moderate stress, but rather a movement out of severe stress into the “not burdened” category.
+
 Overall, these patterns reinforce a key insight: income strongly improves affordability, but renters remain more financially vulnerable than owners. This highlights how tenure type—renting versus owning—plays a structural role in shaping economic security, even among households with similar incomes.
 
 
@@ -672,13 +679,13 @@ plot_df2 <- df23 |>
       ordered = TRUE
     )
   )
-
-plot_df2
 ```
 
 
 ```{r}
 # Plot4.3: housing burden vs. household income for renter
+#| fig-width: 12
+#| fig-height: 10
 ggplot(plot_df2,
        aes(x = income_bracket, y = pct, group = rent_burden)) +
   geom_line(aes(color = rent_burden), size = 1.3) +
@@ -758,7 +765,6 @@ df21 <- df21 |>
     )
   )
 
-df21
 ```
 
 
@@ -832,8 +838,6 @@ dfall_boro_index <- dfall_boro |>
     rti = rent / inc
   ) |>
   ungroup()
-
-dfall_boro_index
 ```
 
 ```{r}
@@ -892,7 +896,6 @@ df_all_boro_final <- df_all_boro_final |>
                        "5" = "Staten Island")
   )
 
-df_all_boro_final
 ```
 
 ```{r}
