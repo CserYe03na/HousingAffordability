@@ -2,4 +2,161 @@
 
 ## Description
 
+The main data source for this project is the New York City Department of Housing Preservation and Development (HPD), which publishes housing research datasets through its official website (https://www.nyc.gov/site/hpd/about/research.page). The data are collected by HPD using long-term housing surveys and administrative records. For this project, we use data from 1991 to 2017, focusing on variables such as occupancy status (OCC), final household weight, borough, monthly gross rent, and total household income. These variables allow us to compute the weighted vacancy rate and analyze affordability trends over time. The datasets are provided in tabular format, and the update frequency varies across survey years. One important limitation is that, for privacy protection, some detailed household-level information is masked or aggregated, which may reduce the precision of certain analyses. Another data challenge is that variable names and column formats are not fully consistent across different years, so additional cleaning and standardization are required to align the datasets for time-series analysis. All data used in this project are sourced directly from the NYC HPD research portal.
+
 ## Missing value analysis
+```{r}
+library(tidyverse)   
+library(janitor)     
+library(scales)      
+library(viridis)
+
+occ_before <- read_csv("/Users/serenacyn03/HousingAffordability/data_raw/occupied_all_years.csv") |> clean_names()
+vac_before <- read_csv("/Users/serenacyn03/HousingAffordability/data_raw/vacant_all_years.csv")   |> clean_names()
+
+puf21 <- read_csv("/Users/serenacyn03/HousingAffordability/data_raw/allunits_puf_21.csv") |> clean_names()
+vac21 <- read_csv("/Users/serenacyn03/HousingAffordability/data_raw/vacant_puf_21.csv") |> clean_names()
+person21 <- read_csv("/Users/serenacyn03/HousingAffordability/data_raw/person_puf_21.csv") |> clean_names()
+occ21     <- read_csv("/Users/serenacyn03/HousingAffordability/data_raw/occupied_puf_21.csv")   |> clean_names()
+
+puf23 <- read_csv("/Users/serenacyn03/HousingAffordability/data_raw/allunits_puf_23.csv") |> clean_names()
+vac23 <- read_csv("/Users/serenacyn03/HousingAffordability/data_raw/vacant_puf_23.csv") |> clean_names()
+person23 <- read_csv("/Users/serenacyn03/HousingAffordability/data_raw/person_puf_23.csv") |> clean_names()
+occ23     <- read_csv("/Users/serenacyn03/HousingAffordability/data_raw/occupied_puf_23.csv")   |> clean_names()
+```
+
+```{r}
+## Missing Value Exploration
+datasets <- list(
+  occ_before = occ_before,
+  vac_before = vac_before,
+  puf21 = puf21,
+  vac21 = vac21,
+  person21 = person21,
+  occ21 = occ21,
+  puf23 = puf23,
+  vac23 = vac23,
+  person23 = person23,
+  occ23 = occ23
+)
+
+na_summary <- lapply(names(datasets), function(nm) {
+  df <- datasets[[nm]]
+  data.frame(
+    dataset = nm,
+    total_rows = nrow(df),
+    total_cols = ncol(df),
+    total_NA = sum(is.na(df)),
+    rows_with_NA = sum(!complete.cases(df))
+  )
+})
+
+na_summary_df <- bind_rows(na_summary)
+na_summary_df
+```
+The table shows that none of the NYCHVS datasets contain explicit NA values—every cell is filled. However, this does not mean the data are complete. NYCHVS encodes missing or inapplicable responses directly within variable values, using codes such as –1 (“not reported”), 9999 / 99999 (rent not applicable), and 999999 / 9999999 (income not reported or no income).
+
+Because the datasets contain hundreds of variables, identifying all encoded missing-value formats would be unnecessarily complex. Instead, we focus on variables directly relevant to our analysis (rent, income, mortgage, vacancy), apply the official NYCHVS coding rules, and convert only these value-encoded codes into proper missing values. This targeted approach allows us to capture meaningful missingness patterns without recoding the full data dictionary.
+
+```{r}
+## Due to the high volume of the variables, we only explore missing values existed in the variables we used below analysis
+# ---------- 21 & 23 datasets ----------
+person21_miss <- person21 |>
+  mutate(
+    missing_income = total_inc_rec_p == -2222222222
+  ) |>
+  count(missing_income)
+
+occ21_miss <- occ21 |>
+  mutate(
+    missing_rent = rent_amount == -2
+  ) |>
+  count(missing_rent)
+
+person23_miss <- person23 |>
+  mutate(
+    missing_income = total_inc_p == -2222222222
+  ) |>
+  count(missing_income)
+
+hh23_miss <- occ23 |>
+  mutate(
+    missing_rent = rent_amount == -2
+  ) |>
+  count(missing_rent)
+
+# ---------- 91–17 dataset -----------
+df_91_17_missing <- occ_before |>
+  mutate(
+    inc  = as.numeric(inc),
+    rent = as.numeric(rent),
+    year = as.numeric(year),
+
+    # missing_income is TRUE when logic makes inc == NA
+    missing_income = case_when(
+      year <= 1996 & inc == 999999  ~ FALSE,   # becomes 0 → not missing
+      year <= 2002 & inc == 9999999 ~ FALSE,   # becomes 0 → not missing
+      inc > 999997                  ~ TRUE,    # missing
+      TRUE ~ FALSE
+    ),
+
+    # missing_rent according to your rules
+    missing_rent = case_when(
+      year == 1991  & rent %in% c(9999, 9998) ~ TRUE,
+      year <= 2010  & rent == 9999            ~ TRUE,
+      year >= 2011  & rent == 99999           ~ TRUE,
+      TRUE ~ FALSE
+    )
+  ) |>
+  summarise(
+    total = n(),
+    missing_income = sum(missing_income),
+    missing_rent   = sum(missing_rent)
+  )
+missing_plot <- occ_before |>
+  mutate(
+    inc  = as.numeric(inc),
+    rent = as.numeric(rent),
+    year = as.numeric(year),
+
+    missing_income = case_when(
+      year <= 1996 & inc == 999999  ~ FALSE,
+      year <= 2002 & inc == 9999999 ~ FALSE,
+      inc > 999997                  ~ TRUE,
+      TRUE ~ FALSE
+    ),
+    missing_rent = case_when(
+      year == 1991  & rent %in% c(9999, 9998) ~ TRUE,
+      year <= 2010  & rent == 9999            ~ TRUE,
+      year >= 2011  & rent == 99999           ~ TRUE,
+      TRUE ~ FALSE
+    )
+  ) |>
+  group_by(year) |>
+  summarise(
+    missing_income_rate = mean(missing_income),
+    missing_rent_rate   = mean(missing_rent)
+  )|>
+  pivot_longer(
+    cols = c(missing_income_rate, missing_rent_rate),
+    names_to = "variable",
+    values_to = "missing_rate"
+  )
+
+ggplot(missing_plot, aes(x = factor(year), y = missing_rate, fill = variable)) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(
+    values = c("missing_income_rate" = "red", "missing_rent_rate" = cividis(3)[1]),
+    labels = c("missing_income_rate" = "Missing Income", "missing_rent_rate"   = "Missing Rent"))+
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Missing Value Percentage by Year",
+    x = "Year",
+    y = "Missing Percentage",
+    fill = "Variable"
+  ) +
+  theme_minimal()
+```
+Although the plot shows that contract rent has a relatively high “missing” rate across survey years, this missingness does not indicate true nonresponse. In the NYCHVS microdata, rent is coded as Not Applicable for households that are owner-occupied or occupied rent-free, meaning these units legitimately do not report a rent amount. Because our rent-based affordability analysis focuses specifically on renter households, these Not-Applicable entries are treated as NA in the rent variable. The apparent 30–38% “missing rent” therefore reflects the share of non-renter households rather than measurement error.
+
+Importantly, these units are not dropped from analysis altogether. Instead, owner-occupied households are incorporated separately through mortgage payment variables, allowing us to evaluate affordability for owners using mortgage burden rather than rent burden. Thus, the high missing rate in the rent field should be interpreted as a structural feature of housing tenure distributions rather than a data quality issue. This distinction ensures that the treatment of missing values aligns with the analytical design: renters are assessed using rent-to-income ratios, while owners are evaluated using mortgage-to-income ratios, providing parallel and internally consistent affordability measures for both groups.
