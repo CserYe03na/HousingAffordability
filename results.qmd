@@ -66,8 +66,6 @@ rate_91_17 <- vac_occ1 |>
     vacancy_rate = vac_fw / (occ_fw + vac_fw)
   ) |>
   arrange(boro, year)
-
-head(rate_91_17)
 ```
 
 ```{r}
@@ -109,12 +107,14 @@ rate_91_23 <- bind_rows(rate_91_17, rate_21, rate_23) |>
       levels = c("Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island")
     )
   )
-
-head(rate_91_23)
 ```
 
 ```{r}
 # Plot1.1: Vacancy rate overview by year by borough
+
+#| fig-width: 12
+#| fig-height: 10
+
 years_present <- sort(unique(rate_91_23$year))
 
 rate_91_23_plot <- rate_91_23 %>%
@@ -131,7 +131,7 @@ ggplot(rate_91_23_plot,
   geom_point(size = 2) +
   scale_color_viridis_d(option = "cividis", name = "Borough") +
   labs(
-    title = "NYC Vacancy Rate by Borough, 1991–2023",
+    title = "NYC Vacancy Rate by Borough, 1991-2023",
     x = "Year",
     y = "Vacancy Rate"
   ) +
@@ -142,9 +142,9 @@ ggplot(rate_91_23_plot,
   )
 
 ```
-This figure shows the long-run vacancy rate trends across New York City’s five boroughs. Overall, vacancy rates remain consistently low throughout the entire period, which suggests that NYC has persistent housing supply pressure for more than three decades. Most boroughs fluctuate within a narrow range of 1% to 4%, indicating a tight housing market rather than a market experiencing oversupply.
-The Bronx shows a noticeable peak in the mid-1990s, reaching above 4%, followed by a sharp decline in the early 2000s. This pattern may reflect earlier periods of disinvestment and later recovery. Manhattan shows the largest fluctuation in the later years, with a sharp spike in 2021 when vacancy rose to nearly 8%, followed by a rapid return to historically low levels by 2023. This unusual jump is likely related to short-term disruptions such as the COVID-19 pandemic rather than long-term structural changes in housing supply.
-Queens also experiences a temporary increase in vacancy around 2021, though to a much smaller extent, and quickly returns to very low levels. Staten Island remains the most stable borough throughout the period, with consistently low vacancy and minimal fluctuations. By 2023, vacancy rates across all five boroughs fall below 1%, highlighting an extremely tight post-pandemic housing market.
+This figure shows the long-run vacancy rate trends across New York City's five boroughs. Overall, vacancy rates remain consistently low throughout the entire period. Even though fluctuation exists, most boroughs keep them within a narrow range of 1% to 4%. The general trend suggests that NYC has a tight housing market and might experience persistent housing supply pressure for more than three decades.
+
+To be specific, the Bronx shows a noticeable peak in the mid 1990s, reaching above 4%, then followed by a sharp decline in the early 2000s. This pattern may reflect earlier periods of disinvestment and later recovery. Manhattan shows the largest fluctuation in the later years, with a sharp spike in 2021 when vacancy rose to nearly 8%, followed by a rapid return to historically low levels by 2023. This unusual jump is likely related to short-term disruptions such as the COVID-19 pandemic rather than long-term structural changes in housing supply. Queens also experiences a temporary increase in vacancy around 2021, though to a much smaller extent, and quickly returns to very low levels. Staten Island remains the most stable borough throughout the period, with consistently low vacancy and minimal fluctuations. By 2023, vacancy rates across all five boroughs fall below 1%, highlighting an extremely tight post-pandemic housing market.
 
 
 ```{r}
@@ -191,11 +191,26 @@ nyc_boroughs_union <- nyc_tract_vacancy |>
 ```
 
 ```{r}
+bbox_new <- st_bbox(nyc_tract_vacancy)
+
+xrange <- bbox_new$xmax - bbox_new$xmin
+yrange <- bbox_new$ymax - bbox_new$ymin
+
+bbox_new[2] <- bbox_new[2] - (0.20 * yrange) 
+
+bbox_new <- st_as_sfc(bbox_new)
+```
+
+
+```{r}
 # Plot1.2: NYC ACS Vacancy Choropleth with Borough Boundary
+
 #| fig-width: 12
+#| fig-height: 10
+
 tmap_mode("plot")
 
-tm_shape(nyc_tract_vacancy) +
+tm_shape(nyc_tract_vacancy, bbox = bbox_new) +
   tm_fill(
     "vacancy_rate",
     palette = "cividis",
@@ -207,18 +222,24 @@ tm_shape(nyc_tract_vacancy) +
   tm_borders(col = "red", lwd = 1) +
   tm_layout(
     title = "Vacancy Rate by Tract with Borough Boundary in 2023",
+    title.position = c("center", "bottom"),
     legend.outside = TRUE,
     frame = FALSE
   )
 
 ```
-This map illustrates the spatial distribution of vacancy rates across New York City at the census tract level in 2023. Most tracts across the city fall within the lowest vacancy range, indicating that the overall housing market remains extremely tight. However, there are clear geographic differences in where the remaining vacancies are concentrated.
-Manhattan shows the most noticeable cluster of higher-vacancy tracts, particularly around Midtown and parts of the Upper East Side and Lower Manhattan. These localized pockets stand out sharply compared with the rest of the city, suggesting that vacancy in 2023 is not evenly distributed across Manhattan but concentrated in specific neighborhoods. Queens also contains a few isolated tracts with comparatively elevated vacancy, appearing mainly near Long Island City and in some outer areas. In contrast, the Bronx, Brooklyn, and Staten Island remain almost entirely within the lowest vacancy categories, showing limited spatial variation.
-Overall, the map highlights that even in a year with historically low citywide vacancy, certain neighborhoods—especially in Manhattan—display higher levels of unoccupied units, while most residential areas across NYC maintain very limited vacancy.
+This Choropleth map illustrates the spatial distribution of vacancy rates across New York City at the census tract level in 2023. Most tracts across the city fall within the lowest vacancy range, indicating that the overall housing market remains extremely tight. However, there are clear geographic differences in where the remaining vacancies are concentrated.
+
+Manhattan shows the most noticeable cluster of higher-vacancy tracts, particularly around Midtown and parts of the Upper East Side and Lower Manhattan. These localized pockets stand out compared with the rest of the city. Queens also contains a few isolated tracts with comparatively elevated vacancy, appearing mainly near Long Island City and in some outer areas. In contrast, the Bronx, Brooklyn, and Staten Island remain almost entirely within the lowest vacancy categories, showing limited spatial variation.
+
+Overall, even in a year with historically low citywide vacancy, certain neighborhoods, especially in Manhattan, display higher levels of unoccupied units, while most residential areas across NYC maintain very limited vacancy.
 
 
 ```{r}
 # Plot2.1: Vacancy Reason Distribution Bar Chart
+#| fig-width: 12
+#| fig-height: 10
+
 reason_labels <- c(
   "-2" = "Not Applicable (Available/Owner-prev)",
   "-1" = "Not Reported",
@@ -244,10 +265,16 @@ vac23 |>
     x = "Count",
     y = "Reason"
   ) +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 12 , hjust = 0.5),
+    plot.margin = margin(t = 20, r = 20, b = 20, l = 20) 
+  )
 ```
-This bar chart shows the distribution of reported reasons why vacant housing units are not available for rent. The largest category is “multiple reasons reported,” indicating that many vacant units face more than one constraint at the same time, such as renovation needs combined with legal or structural issues. This highlights the complexity behind housing vacancy and suggests that many units are kept off the market due to overlapping barriers rather than a single cause.
+This bar chart shows the distribution of reported reasons why vacant housing units are not available for rent. The largest category is "multiple reasons reported", which means many vacant units face more than one constraint rather than a single cause at the same time.
+
 Seasonal or occasional use is the second most common reason, which suggests that a significant portion of vacancies are associated with second homes, temporary occupancy, or infrequent usage. These units are technically vacant but are not intended to be part of the long-term rental supply. Units under renovation also represent a substantial share of unavailable housing, showing that short-term construction and improvement activities temporarily reduce market supply. Structural or legal reasons further limit availability, reflecting the role of regulatory and physical constraints in shaping vacancy.
+
 In contrast, relatively few units are reported as being intentionally held vacant. Overall, this distribution suggests that most vacancy in the market is driven by practical factors rather than by holding of housing from renters.
 
 ```{r}
@@ -423,6 +450,9 @@ pairs(tab,
       main = "Mosaic Pairs: Household Demographics vs Rent Levels (NYCHVS 2023)")
 
 ```
+The mosaic pairs plot shows a clear pattern: higher-income households are much more likely to appear in the high-rent categories, while lower-income households cluster heavily in the cheapest rent brackets. This suggests that rent levels in NYC closely track economic capacity—households do not spread randomly across rent tiers but sort themselves according to what they can realistically afford.
+
+An important insight is that while demographic factors like age, race, or household type show some small differences, none of them explain rent variation as strongly as income does. Income overwhelmingly determines which rent levels households end up in, reinforcing the idea that NYC’s rental market is structured primarily by affordability rather than demographic differences.
 
 ```{r}
 person23_clean <- person23 |>
@@ -490,7 +520,7 @@ df23 <- hh_df23_clean |>
   left_join(boro_lookup23, by = "control") |>
   left_join(income_household23 |> select(control, hh_income, fw), by = "control") |>
   mutate(
-    fw = coalesce(`fw.x`, `fw.y`),   # 优先 household weight，没有就用 income weight
+    fw = coalesce(`fw.x`, `fw.y`),
     annual_rent = rent_amount * 12,
     income_for_burden = if_else(hh_income <= 0 | is.na(hh_income),
                                 NA_real_, hh_income),
@@ -866,9 +896,8 @@ df_all_boro_final
 ```
 
 ```{r}
-# Plot4.4: Housing affordabiltiy vs vacancy scatter
+# Plot4.4: Housing affordability vs vacancy scatter
 cividis_pal <- c(
-  # 深蓝（Bronx）
   "black",
   "steelblue",
   "darkred",  

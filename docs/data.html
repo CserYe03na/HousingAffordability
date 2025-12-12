@@ -208,7 +208,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="description" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="description"><span class="header-section-number">2.1</span> Description</h2>
-<p>The main data source for this project is the New York City Department of Housing Preservation and Development (HPD), which publishes housing research datasets through its official website (https://www.nyc.gov/site/hpd/about/research.page). The data are collected by HPD using long-term housing surveys and administrative records. For this project, we use data from 1991 to 2017, focusing on variables such as occupancy status (OCC), final household weight, borough, monthly gross rent, and total household income. These variables allow us to compute the weighted vacancy rate and analyze affordability trends over time. The datasets are provided in tabular format, and the update frequency varies across survey years. One important limitation is that, for privacy protection, some detailed household-level information is masked or aggregated, which may reduce the precision of certain analyses. Another data challenge is that variable names and column formats are not fully consistent across different years, so additional cleaning and standardization are required to align the datasets for time-series analysis. All data used in this project are sourced directly from the NYC HPD research portal.</p>
+<p>The project builds on the <a href="https://www.nyc.gov/site/hpd/about/research.page?utm_source=chatgpt.com">New York City Housing and Vacancy Survey (NYCHVS)</a> published by the New York City Department of Housing Preservation and Development (HPD) in collaboration with the U.S. Census Bureau. The NYCHVS is a citywide survey conducted about every three years to monitor NYC’s housing stock and residency. The survey is based on a statistical sample of housing units, and the data are collected through in-person interviews and on-site observations by field representatives, covering information on occupancy status, rent, building characteristics, housing quality, and household demographics. Occupied units are surveyed by speaking directly with residents, while vacant units are documented through key informants such as owners or building managers. Public Use Microdata Files (PUFs) are available for eleven years in csv format, accompanied by user guide and record layouts. The dataset is released in four linked files. The All Units file contains information on every housing unit, including both occupied and vacant; the Occupied/Vacant files are household-level data for occupied/unoccupied units; and the Person file includes individual-level demographic information. For this project, we use data from 1991 to 2023, focusing on variables related to affordability and vacancy rate analysis.</p>
+<p>Although each NYCHVS cycle follows a consistent structure, minor updates are made each time to reflect changes in the housing market and survey methods. Subtle differences in variable names, variable definitions, and sampling design between survey waves may introduce potential issues, which requires additional attention in our analysis. Another important limitation is that, for privacy protection, some detailed household-level information is masked or top-coded, which may reduce the precision of certain analyses.</p>
 </section>
 <section id="missing-value-analysis" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="missing-value-analysis"><span class="header-section-number">2.2</span> Missing value analysis</h2>
@@ -263,28 +264,43 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>na_summary_df <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(na_summary)</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>na_summary_df</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>na_plot_df <span class="ot">&lt;-</span> na_summary_df <span class="sc">|&gt;</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">missing_rate =</span> total_NA <span class="sc">/</span> (total_rows <span class="sc">*</span> total_cols)</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>      dataset total_rows total_cols total_NA rows_with_NA
-1  occ_before     140813          5        0            0
-2  vac_before      12578          4        0            0
-3       puf21       8394        105        0            0
-4       vac21       1305         91        0            0
-5    person21      15585        179        0            0
-6       occ21       7089        232        0            0
-7       puf23       9597        116        0            0
-8       vac23        821         88        0            0
-9    person23      20458        204        0            0
-10      occ23       8776        250        0            0</code></pre>
 </div>
-</div>
-<p>The table shows that none of the NYCHVS datasets contain explicit NA values—every cell is filled. However, this does not mean the data are complete. NYCHVS encodes missing or inapplicable responses directly within variable values, using codes such as –1 (“not reported”), 9999 / 99999 (rent not applicable), and 999999 / 9999999 (income not reported or no income).</p>
-<p>Because the datasets contain hundreds of variables, identifying all encoded missing-value formats would be unnecessarily complex. Instead, we focus on variables directly relevant to our analysis (rent, income, mortgage, vacancy), apply the official NYCHVS coding rules, and convert only these value-encoded codes into proper missing values. This targeted approach allows us to capture meaningful missingness patterns without recoding the full data dictionary.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Due to the high volume of the variables, we only explore missing values existed in the variables we used below analysis</span></span>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(na_plot_df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(dataset, missing_rate), </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                       <span class="at">y =</span> missing_rate, <span class="at">fill =</span> missing_rate)) <span class="sc">+</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">width =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> scales<span class="sc">::</span><span class="fu">percent</span>(missing_rate, <span class="at">accuracy =</span> <span class="fl">0.01</span>)),</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="fl">3.5</span>) <span class="sc">+</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="fu">cividis</span>(<span class="dv">3</span>)[<span class="dv">1</span>], <span class="at">high =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">percent_format</span>()) <span class="sc">+</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Missing Value Overview by Dataset"</span>,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Dataset"</span>,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Missing Value Percentage"</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The plot shows that none of the NYCHVS datasets contain explicit NA values, which means every cell is filled. However, we noticed from the <em>UserGuide and Codebook</em> that NYCHVS encodes missing or inapplicable responses directly within variable values, using codes such as –2, -1, 9999/99999, to represents “not reported” or “inapplicable”. Because the datasets contain hundreds of variables, identifying all encoded missing-value formats would be unnecessarily complex. Instead, we focus only on variables significant or directly relevant to our analysis , apply the official NYCHVS coding rules, and convert value-encoded codes into proper missing values.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Due to the high volume of the variables, we only explore missing values existed in the variables we used for analysis</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------- 21 &amp; 23 datasets ----------</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>person21_miss <span class="ot">&lt;-</span> person21 <span class="sc">|&gt;</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
@@ -375,7 +391,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a>    <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"missing_income_rate"</span> <span class="ot">=</span> <span class="st">"Missing Income"</span>, <span class="st">"missing_rent_rate"</span>   <span class="ot">=</span> <span class="st">"Missing Rent"</span>))<span class="sc">+</span></span>
 <span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">percent_format</span>()) <span class="sc">+</span></span>
 <span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Missing Value Percentage by Year"</span>,</span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Missing Value Percentage in Rent and Income by Year"</span>,</span>
 <span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Year"</span>,</span>
 <span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Missing Percentage"</span>,</span>
 <span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"Variable"</span></span>
@@ -385,13 +401,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="data_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Although the plot shows that contract rent has a relatively high “missing” rate across survey years, this missingness does not indicate true nonresponse. In the NYCHVS microdata, rent is coded as Not Applicable for households that are owner-occupied or occupied rent-free, meaning these units legitimately do not report a rent amount. Because our rent-based affordability analysis focuses specifically on renter households, these Not-Applicable entries are treated as NA in the rent variable. The apparent 30–38% “missing rent” therefore reflects the share of non-renter households rather than measurement error.</p>
-<p>Importantly, these units are not dropped from analysis altogether. Instead, owner-occupied households are incorporated separately through mortgage payment variables, allowing us to evaluate affordability for owners using mortgage burden rather than rent burden. Thus, the high missing rate in the rent field should be interpreted as a structural feature of housing tenure distributions rather than a data quality issue. This distinction ensures that the treatment of missing values aligns with the analytical design: renters are assessed using rent-to-income ratios, while owners are evaluated using mortgage-to-income ratios, providing parallel and internally consistent affordability measures for both groups.</p>
+<p>Although the plot shows that rent amount has a relatively high “missing” rate across survey years, this missing does not indicate true non-response. In the NYCHVS microdata, rent is coded as “Not Applicable” for households that are owner-occupied or occupied rent-free, meaning these units legitimately do not report a rent amount. Because our rent-based affordability analysis focuses specifically on renter households, these Not-Applicable entries are treated as NA in the rent variable. The apparent 30-38% “missing rent” therefore reflects the share of owner households rather than measurement error.</p>
+<p>Importantly, these units are not dropped from analysis altogether. Instead, owner-occupied households are incorporated separately through mortgage payment variables, allowing us to evaluate affordability for owners using mortgage burden rather than rent burden. Thus, the high missing rate in the rent field should be interpreted as a structural feature of housing tenure distributions rather than a data quality issue.</p>
 
 
 </section>

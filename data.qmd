@@ -2,7 +2,9 @@
 
 ## Description
 
-The main data source for this project is the New York City Department of Housing Preservation and Development (HPD), which publishes housing research datasets through its official website (https://www.nyc.gov/site/hpd/about/research.page). The data are collected by HPD using long-term housing surveys and administrative records. For this project, we use data from 1991 to 2017, focusing on variables such as occupancy status (OCC), final household weight, borough, monthly gross rent, and total household income. These variables allow us to compute the weighted vacancy rate and analyze affordability trends over time. The datasets are provided in tabular format, and the update frequency varies across survey years. One important limitation is that, for privacy protection, some detailed household-level information is masked or aggregated, which may reduce the precision of certain analyses. Another data challenge is that variable names and column formats are not fully consistent across different years, so additional cleaning and standardization are required to align the datasets for time-series analysis. All data used in this project are sourced directly from the NYC HPD research portal.
+  The project builds on the [New York City Housing and Vacancy Survey (NYCHVS)](https://www.nyc.gov/site/hpd/about/research.page?utm_source=chatgpt.com) published by the New York City Department of Housing Preservation and Development (HPD) in collaboration with the U.S. Census Bureau. The NYCHVS is a citywide survey conducted about every three years to monitor NYC's housing stock and residency. The survey is based on a statistical sample of housing units, and the data are collected through in-person interviews and on-site observations by field representatives, covering information on occupancy status, rent, building characteristics, housing quality, and household demographics. Occupied units are surveyed by speaking directly with residents, while vacant units are documented through key informants such as owners or building managers. Public Use Microdata Files (PUFs) are available for eleven years in csv format, accompanied by user guide and record layouts. The dataset is released in four linked files. The All Units file contains information on every housing unit, including both occupied and vacant; the Occupied/Vacant files are household-level data for occupied/unoccupied units; and the Person file includes individual-level demographic information. For this project, we use data from 1991 to 2023, focusing on variables related to affordability and vacancy rate analysis. 
+
+  Although each NYCHVS cycle follows a consistent structure, minor updates are made each time to reflect changes in the housing market and survey methods. Subtle differences in variable names, variable definitions, and sampling design between survey waves may introduce potential issues, which requires additional attention in our analysis. Another important limitation is that, for privacy protection, some detailed household-level information is masked or top-coded, which may reduce the precision of certain analyses.  
 
 ## Missing value analysis
 ```{r}
@@ -52,14 +54,32 @@ na_summary <- lapply(names(datasets), function(nm) {
 })
 
 na_summary_df <- bind_rows(na_summary)
-na_summary_df
-```
-The table shows that none of the NYCHVS datasets contain explicit NA values—every cell is filled. However, this does not mean the data are complete. NYCHVS encodes missing or inapplicable responses directly within variable values, using codes such as –1 (“not reported”), 9999 / 99999 (rent not applicable), and 999999 / 9999999 (income not reported or no income).
 
-Because the datasets contain hundreds of variables, identifying all encoded missing-value formats would be unnecessarily complex. Instead, we focus on variables directly relevant to our analysis (rent, income, mortgage, vacancy), apply the official NYCHVS coding rules, and convert only these value-encoded codes into proper missing values. This targeted approach allows us to capture meaningful missingness patterns without recoding the full data dictionary.
+na_plot_df <- na_summary_df |>
+  mutate(
+    missing_rate = total_NA / (total_rows * total_cols)
+  )
+```
 
 ```{r}
-## Due to the high volume of the variables, we only explore missing values existed in the variables we used below analysis
+ggplot(na_plot_df, aes(x = reorder(dataset, missing_rate), 
+                       y = missing_rate, fill = missing_rate)) +
+  geom_col(width = 0.8) +
+  geom_text(aes(label = scales::percent(missing_rate, accuracy = 0.01)),
+            vjust = -0.5, size = 3.5) +
+  scale_fill_gradient(low = cividis(3)[1], high = "red") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Missing Value Overview by Dataset",
+    x = "Dataset",
+    y = "Missing Value Percentage"
+  ) +
+  theme_minimal()
+```
+  The plot shows that none of the NYCHVS datasets contain explicit NA values, which means every cell is filled. However, we noticed from the *UserGuide and Codebook* that NYCHVS encodes missing or inapplicable responses directly within variable values, using codes such as –2, -1, 9999/99999, to represents "not reported" or "inapplicable". Because the datasets contain hundreds of variables, identifying all encoded missing-value formats would be unnecessarily complex. Instead, we focus only on variables significant or directly relevant to our analysis , apply the official NYCHVS coding rules, and convert value-encoded codes into proper missing values.
+
+```{r}
+## Due to the high volume of the variables, we only explore missing values existed in the variables we used for analysis
 # ---------- 21 & 23 datasets ----------
 person21_miss <- person21 |>
   mutate(
@@ -150,13 +170,13 @@ ggplot(missing_plot, aes(x = factor(year), y = missing_rate, fill = variable)) +
     labels = c("missing_income_rate" = "Missing Income", "missing_rent_rate"   = "Missing Rent"))+
   scale_y_continuous(labels = scales::percent_format()) +
   labs(
-    title = "Missing Value Percentage by Year",
+    title = "Missing Value Percentage in Rent and Income by Year",
     x = "Year",
     y = "Missing Percentage",
     fill = "Variable"
   ) +
   theme_minimal()
 ```
-Although the plot shows that contract rent has a relatively high “missing” rate across survey years, this missingness does not indicate true nonresponse. In the NYCHVS microdata, rent is coded as Not Applicable for households that are owner-occupied or occupied rent-free, meaning these units legitimately do not report a rent amount. Because our rent-based affordability analysis focuses specifically on renter households, these Not-Applicable entries are treated as NA in the rent variable. The apparent 30–38% “missing rent” therefore reflects the share of non-renter households rather than measurement error.
+  Although the plot shows that rent amount has a relatively high "missing" rate across survey years, this missing does not indicate true non-response. In the NYCHVS microdata, rent is coded as "Not Applicable" for households that are owner-occupied or occupied rent-free, meaning these units legitimately do not report a rent amount. Because our rent-based affordability analysis focuses specifically on renter households, these Not-Applicable entries are treated as NA in the rent variable. The apparent 30-38% "missing rent" therefore reflects the share of owner households rather than measurement error.
 
-Importantly, these units are not dropped from analysis altogether. Instead, owner-occupied households are incorporated separately through mortgage payment variables, allowing us to evaluate affordability for owners using mortgage burden rather than rent burden. Thus, the high missing rate in the rent field should be interpreted as a structural feature of housing tenure distributions rather than a data quality issue. This distinction ensures that the treatment of missing values aligns with the analytical design: renters are assessed using rent-to-income ratios, while owners are evaluated using mortgage-to-income ratios, providing parallel and internally consistent affordability measures for both groups.
+  Importantly, these units are not dropped from analysis altogether. Instead, owner-occupied households are incorporated separately through mortgage payment variables, allowing us to evaluate affordability for owners using mortgage burden rather than rent burden. Thus, the high missing rate in the rent field should be interpreted as a structural feature of housing tenure distributions rather than a data quality issue.
