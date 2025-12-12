@@ -1,9 +1,12 @@
 # Results
 
-This project looks at how housing vacancy and affordability have changed in New York City over time. Even though people often talk about “empty apartments,” our findings show that NYC’s vacancy rate has stayed low for more than 30 years, and only spiked briefly in 2021. When we map vacancy across neighborhoods, we see that higher vacancy is concentrated in parts of Manhattan, while most other areas remain very tight.
-To understand why vacant units are not available, we examined the reported reasons. Most units are unavailable because of renovations, seasonal use, or multiple overlapping issues—not because they are intentionally kept off the market. This suggests that the city’s main housing challenge is not unused supply, but rather limited availability caused by structural and practical constraints.
-We also looked at what kinds of housing units tend to be vacant. Basic building features—like number of rooms, stories, and building size—show some patterns, but they do not strongly explain vacancy on their own. Affordability, however, shows a much clearer story. Rent in NYC has grown much faster than income since the early 1990s, and low-income renters are especially likely to be severely rent-burdened. Even middle-income renters face rising pressure. When we compare affordability with vacancy, we find no strong link: places with expensive housing do not necessarily have higher vacancy. Instead, affordability problems exist even when the market is extremely tight.
-Overall, the findings suggest that NYC’s housing issues are driven less by “too many vacant apartments” and much more by a long-term mismatch between rent growth and income growth, combined with limited rental supply and structural barriers that keep some units offline. This helps explain why affordability remains one of the city’s biggest challenges.
+This project looks at how housing vacancy and affordability have changed in New York City over time. Even though people often talk about "empty apartments", our findings show that NYC's vacancy rate has stayed low for more than 30 years, and only spiked briefly in 2021. When we map vacancy across neighborhoods, we see that higher vacancy is concentrated in parts of Manhattan, while most other areas remain very tight.
+
+To understand why vacant units are not available, we examined the reported reasons. Most units are unavailable because of renovations, seasonal use, or multiple overlapping issues, not because they are intentionally kept off the market. Thus, we conclude that the city's main housing challenge is not unused supply, but rather limited availability caused by structural and practical constraints.
+
+We also looked at what kinds of housing units tend to be vacant. Basic building features, like number of rooms, stories, and building size, show some patterns, but they do not strongly explain vacancy on their own. Affordability, however, shows a much clearer story. Rent in NYC has grown much faster than income since the early 1990s, and low-income renters are especially likely to be severely rent-burdened. Even middle-income renters face rising pressure. When we compare affordability with vacancy, we find no strong link: places with expensive housing do not necessarily have higher vacancy. Instead, affordability problems exist even when the market is extremely tight.
+
+Overall, the findings suggest that NYC's housing issues are driven less by "too many vacant apartments" and much more by a long-term mismatch between rent growth and income growth, combined with limited rental supply and structural barriers that keep some units offline. This helps explain why affordability remains one of the city's biggest challenges.
 
 ```{r}
 # All needed library
@@ -273,9 +276,7 @@ vac23 |>
 ```
 This bar chart shows the distribution of reported reasons why vacant housing units are not available for rent. The largest category is "multiple reasons reported", which means many vacant units face more than one constraint rather than a single cause at the same time.
 
-Seasonal or occasional use is the second most common reason, which suggests that a significant portion of vacancies are associated with second homes, temporary occupancy, or infrequent usage. These units are technically vacant but are not intended to be part of the long-term rental supply. Units under renovation also represent a substantial share of unavailable housing, showing that short-term construction and improvement activities temporarily reduce market supply. Structural or legal reasons further limit availability, reflecting the role of regulatory and physical constraints in shaping vacancy.
-
-In contrast, relatively few units are reported as being intentionally held vacant. Overall, this distribution suggests that most vacancy in the market is driven by practical factors rather than by holding of housing from renters.
+Seasonal or occasional use is the second most common reason, which suggests that a significant portion of vacancies are associated with second homes, temporary occupancy, or infrequent usage. These units are technically vacant but are not intended to be part of the long-term rental supply. Units under renovation also represent a substantial share of unavailable housing, showing that short-term construction and improvement activities can temporarily reduce market supply. In contrast, relatively few units are reported as being intentionally held vacant. Generally, this distribution reveals that most vacancy in the market is driven by practical factors rather than by holding of housing from renters.
 
 ```{r}
 vacall_23 <- vac23 |>
@@ -327,14 +328,23 @@ fviz_pca_biplot(
   label = "var",
   col.var = viridisLite::cividis(6)[2],     
   col.ind = "grey", 
-) +
-  theme_minimal()
+) + 
+  ggtitle("Structural Housing Characteristics Associated with Vacancy, 2023") +
+  theme_minimal() 
 ```
-This biplot shows the main structural differences among vacant housing units using two principal components. The first dimension (PC1, x-axis) mainly reflects overall building scale and vertical form. On the right side of the x-axis, variables such as log units, year built, number of stories, and unit floor level load positively. This means units on the right side tend to be in larger, taller, and newer buildings, and are located on higher floors. In contrast, on the left side of the x-axis, elevator and condo/co-op load in the opposite direction, which suggests a different building type structure, often related to lower-rise or non–high-density residential forms.
-The second dimension (PC2, y-axis) is mainly driven by interior unit features, including number of rooms, number of bedrooms, and number of bathrooms. Units with higher values on PC2 tend to have larger interior space and more amenities, while units with lower PC2 values are more compact and have fewer interior features.
-Overall, this biplot shows that vacant housing units in NYC differ mainly along two structural dimensions:
- (1) building scale and vertical structure, and
- (2) interior unit size and amenities.
+The biplot describes the main structural differences among vacant housing units using two principal components.
+
+The first dimension mainly reflects overall building scale and vertical form. On the right side of the x-axis, variables such as log units, year built, number of stories, and unit floor level load positively. We can conclude that units on the right side tend to be in larger, taller, and newer buildings, and are located on higher floors. In contrast, on the left side of the x-axis, elevator and condo/co-op load in the opposite direction, suggesting a different building type structure.
+
+The second dimension is mainly driven by interior unit features, including number of rooms, number of bedrooms, and number of bathrooms. Units with higher values on PC2 tend to have larger interior space and more amenities, while units with lower PC2 values are more compact and have fewer interior features.
+
+The variable log_lastrent has a very short loading vector. That proves the past rent level contribute minimally to the structural variation captured by the first two principal components and do not strongly distinguish among vacant units.
+
+To sum up, this biplot shows that vacant housing units in NYC differ mainly along two structural dimensions:
+
+  1. building scale and vertical structure, and
+  2. interior unit size and amenities.
+  
 While this PCA helps summarize the structural heterogeneity among vacant units, it does not by itself establish a direct causal relationship between these structural features and vacancy. Instead, it provides visual evidence that vacant units in 2023 vary widely in both building type and interior characteristics.
 
 
@@ -434,9 +444,8 @@ hh_df <- hh_df |>
 
 
 ```{r}
-
-#| fig-width: 20
-#| fig-height: 18
+#| fig-width: 18
+#| fig-height: 15
 
 df_cat <- hh_df |>
   select(rent_bracket, hh_race, age_group, hh_type, income_bracket) |>
@@ -451,9 +460,9 @@ pairs(tab,
       main = "Mosaic Pairs: Household Demographics vs Rent Levels (NYCHVS 2023)")
 
 ```
-The mosaic pairs plot shows a clear pattern: higher-income households are much more likely to appear in the high-rent categories, while lower-income households cluster heavily in the cheapest rent brackets. This suggests that rent levels in NYC closely track economic capacity—households do not spread randomly across rent tiers but sort themselves according to what they can realistically afford.
+The mosaic pairs plot shows a clear pattern: higher-income households are much more likely to appear in the high-rent categories, while lower-income households cluster heavily in the cheapest rent brackets. Rent levels in NYC closely track economic capacity-households do not spread randomly across rent tiers but sort themselves according to what they can realistically afford.
 
-An important insight is that while demographic factors like age, race, or household type show some small differences, none of them explain rent variation as strongly as income does. Income overwhelmingly determines which rent levels households end up in, reinforcing the idea that NYC’s rental market is structured primarily by affordability rather than demographic differences.
+An important insight is that while demographic factors like age, race, or household type show some small differences, none of them explain rent variation as strongly as income does. Income overwhelmingly determines which rent levels households end up in, reinforcing the idea that NYC's rental market is structured primarily by affordability rather than demographic differences.
 
 ```{r}
 person23_clean <- person23 |>
@@ -566,8 +575,8 @@ plot_df <- combined23 |>
 ```{r}
 # Plot4.1: Housing cost burden by owner and renter
 
-#| fig-width: 12
-#| fig-height: 10
+#| fig-width: 18
+#| fig-height: 15
 
 plot_df$cost_burden <- factor(
   plot_df$cost_burden,
@@ -590,7 +599,7 @@ ggplot(plot_df, aes(x = tenure, y = pct, fill = cost_burden)) +
   ) +
   labs(
     title = "Housing Cost Burden Composition in 2023",
-    subtitle = "Owners with mortgages vs Renters ",
+    subtitle = "Owners with mortgages vs Renters with rent",
     x = "",
     y = "Percent of Households",
     fill = "Cost Burden Level"
@@ -602,8 +611,10 @@ ggplot(plot_df, aes(x = tenure, y = pct, fill = cost_burden)) +
   )
 
 ```
-This stacked bar chart compares housing cost burden between homeowners with mortgages and renters in 2023. A clear difference appears between the two groups. Among homeowners with mortgages, about three-quarters of households fall into the “not burdened” category, meaning they spend less than 30% of their income on housing. Only a relatively small share of mortgage holders are moderately or severely burdened.
+This stacked bar chart compares housing cost burden between homeowners with mortgages and renters in 2023. A clear difference appears between the two groups. Among homeowners with mortgages, about one third of households fall into the "not burdened" category. That is, they spend less than 30% of their income on housing. Only a relatively small share of mortgage holders are moderately or severely burdened.
+
 In contrast, renters experience much higher housing cost pressure. Only about half of renter households are not burdened, while the remaining half are either moderately or severely burdened. Most notably, the share of renters who are severely burdened is substantially higher than that of homeowners with mortgages.
+
 Overall, this figure shows that renters face much greater housing affordability challenges than homeowners in 2023. Even without making causal claims, the descriptive pattern clearly indicates that housing cost burdens are unevenly distributed across tenure types, with renters being significantly more vulnerable to high housing expenses.
 
 ```{r}
@@ -626,51 +637,12 @@ plot_df_owner <- owner23 |>
 ```
 
 ```{r}
-# Plot4.2: housing burden vs. household income for owner
-#| fig-width: 12
-#| fig-height: 10
-ggplot(plot_df_owner,
-       aes(x = income_bracket, y = pct, group = cost_burden)) +
-  geom_line(aes(color = cost_burden), size = 1.3) +
-  geom_point(aes(color = cost_burden), size = 4) +
-  geom_text(
-    aes(label = percent(pct, accuracy = 1), color = cost_burden),
-    vjust = -0.8, size = 4
-  ) +
-  scale_y_continuous(labels = percent_format()) +
-  scale_color_manual(
-    values = c(
-      "Severely burdened (50%+)"         = "red",
-      "Moderately burdened (30–49%)"     = cividis(3)[2],
-      "Not burdened (<30%)"              = cividis(3)[1]
-    )
-  ) +
-  labs(
-    title = "Mortgage Burden Across Income Groups, 2023",
-    x = "Household Income Bracket",
-    y = "Percent of Owner Households",
-    color = "Mortgage Cost Burden Level"
-  ) +
-  theme_minimal() +
-  theme(
-    legend.position = "right",
-    panel.grid.minor = element_blank()
-  )
-```
-Across income groups, both charts show a very similar overall pattern: as household income increases, the share of households experiencing severe cost burden drops sharply, while the share of households who are not burdened rises. This suggests that income is the primary factor shaping housing affordability for both renters and owners. However, when we compare the two groups more closely, we observe an important difference: at every income level, owners with mortgages face much lower severe cost burden rates than renters.
-
-This gap implies that owning a home, even with a mortgage, generally provides more stability and protection against extreme housing cost stress. Homeowners benefit from more predictable payments and may have locked in lower mortgage rates, while renters are exposed to faster rent increases and market volatility. At the same time, moderate burden levels stay relatively stable across income for both groups, suggesting that the main shift with higher income is not a reduction in moderate stress, but rather a movement out of severe stress into the “not burdened” category.
-
-Overall, these patterns reinforce a key insight: income strongly improves affordability, but renters remain more financially vulnerable than owners. This highlights how tenure type—renting versus owning—plays a structural role in shaping economic security, even among households with similar incomes.
-
-
-```{r}
 plot_df2 <- df23 |>
   filter(!is.na(rent_burden), !is.na(income_bracket)) |>
-  group_by(income_bracket, rent_burden) |>   # group order swapped
+  group_by(income_bracket, rent_burden) |>   
   summarise(wt = sum(fw, na.rm = TRUE), .groups = "drop_last") |> 
-  group_by(income_bracket) |>                # HERE is the difference
-  mutate(pct = wt / sum(wt)) |>              # denominator = total in that income bracket
+  group_by(income_bracket) |>               
+  mutate(pct = wt / sum(wt)) |>             
   ungroup() |>
   mutate(
     income_bracket = factor(
@@ -683,16 +655,16 @@ plot_df2 <- df23 |>
 
 
 ```{r}
-# Plot4.3: housing burden vs. household income for renter
-#| fig-width: 12
-#| fig-height: 10
+# Plot4.2: housing burden vs. household income for renter
+#| fig-width: 18
+#| fig-height: 12
 ggplot(plot_df2,
        aes(x = income_bracket, y = pct, group = rent_burden)) +
   geom_line(aes(color = rent_burden), size = 1.3) +
   geom_point(aes(color = rent_burden), size = 4) +
   geom_text(aes(label = percent(pct, accuracy = 1),
                 color = rent_burden),
-            vjust = -0.8, size = 4) +
+            vjust = -0.8, size = 3) +
   scale_y_continuous(labels = percent_format()) +
   scale_color_manual(
     values = c(
@@ -714,9 +686,48 @@ ggplot(plot_df2,
   )
 
 ```
-This figure compares the growth of the rent index and the household income index in New York City, with both series normalized to 100 in 1991. From 1991 to around 2008, rent and income increased at almost the same pace, meaning affordability stayed relatively stable. After the 2008 financial crisis, rent growth slowed down noticeably, and between 2008 and 2017 income even grew a bit faster than rent. This period may reflect the broader economic recovery, when wage growth slightly outpaced housing cost increases.
-However, the pattern changes clearly after 2017. Rent begins to rise more quickly, and the gap becomes especially large in the most recent years. From 2021 to 2023, during the post-pandemic period, rent increases sharply while income grows much more slowly. This creates the largest divergence in the entire time series.
-Overall, the figure suggests that major economic events—such as the 2008 recession and the COVID-19 pandemic—played an important role in shaping the relationship between rent and income. While rent and income once moved together, recent years show a clear disconnect, with rent growth far outpacing income growth. This widening gap helps explain the higher rent burdens observed across many income groups in 2023.
+
+
+
+```{r}
+# Plot4.3: housing burden vs. household income for owner
+#| fig-width: 18
+#| fig-height: 12
+
+ggplot(plot_df_owner,
+       aes(x = income_bracket, y = pct, group = cost_burden)) +
+  geom_line(aes(color = cost_burden), size = 1.3) +
+  geom_point(aes(color = cost_burden), size = 4) +
+  geom_text(
+    aes(label = percent(pct, accuracy = 1), color = cost_burden),
+    vjust = -0.8, size = 3
+  ) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_color_manual(
+    values = c(
+      "Severely burdened (50%+)"         = "red",
+      "Moderately burdened (30–49%)"     = cividis(3)[2],
+      "Not burdened (<30%)"              = cividis(3)[1]
+    )
+  ) +
+  labs(
+    title = "Mortgage Burden Across Income Groups, 2023",
+    x = "Household Income Bracket",
+    y = "Percent of Owner Households",
+    color = "Mortgage Cost Burden Level"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    plot.margin = margin(t = 30, r = 15, b = 15, l = 15)  
+  )
+```
+Across income groups, both charts show a very similar overall pattern: as household income increases, the share of households experiencing severe cost burden drops sharply, while the share of households who are not burdened rises. However, as we compare the two groups more closely, we observe an important difference that at every income level, owners with mortgages face much lower severe cost burden rates than renters.
+
+This gap implies that owning a home, even with a mortgage, generally provides more stability and protection against extreme housing cost stress. Homeowners benefit from more predictable payments and may have locked in lower mortgage rates, while renters are exposed to faster rent increases and market volatility. At the same time, moderate burden levels stay relatively stable across income for both groups. The main shift with higher income is not a reduction in moderate stress, but rather a movement out of severe stress into the “not burdened” category.
+
+Income strongly improves affordability, but renters remain more financially vulnerable than owners. This highlights how tenure type plays a structural role in shaping economic security, even among households with similar incomes.
 
 
 ```{r}
@@ -875,6 +886,11 @@ ggplot(df_city, aes(x = year_f, y = value, color = type)) +
   theme_minimal()
 
 ```
+The line chart compares the growth of the rent index and the household income index in New York City, with both series normalized to 100 in 1991. 
+
+From 1991 to around 2008, rent and income increased at almost the same pace, meaning affordability stayed relatively stable. After the 2008 financial crisis, rent growth slowed down noticeably, and between 2008 and 2017 income even grew a bit faster than rent. This period may reflect the broader economic recovery, when wage growth slightly outpaced housing cost increases. However, the pattern changes clearly after 2017. Rent begins to rise more quickly, and the gap becomes especially large in the most recent years. From 2021 to 2023, during the post-pandemic period, rent increases sharply while income grows much more slowly. This creates the largest divergence in the entire time series.
+
+From the plot, we find that major economic events, such as the 2008 recession and the COVID-19 pandemic, played an important role in shaping the relationship between rent and income. While rent and income once moved together, recent years show a clear disconnect, with rent growth far outpacing income growth. The widening gap there helps explain the higher rent burdens observed across many income groups in 2023.
 
 ```{r}
 dfall_boro_index <- dfall_boro_index |>
@@ -946,6 +962,8 @@ ggplot(df_all_boro_final,
   )
 
 ```
-This scatterplot compares borough-level affordability, measured by the weighted rent-to-income ratio, with vacancy rates from 1991 to 2023. Overall, the points show no strong linear relationship between the two variables. Most borough-year observations cluster within a narrow range of affordability (around 0.015–0.020) and vacancy rates (around 1.5%–3.5%). This suggests that New York City typically experiences high rent burden and low vacancy at the same time, rather than a simple tradeoff between the two.
-Manhattan’s 2021 observation stands out as a clear outlier, with both unusually high vacancy and high rent burden. This spike likely reflects the unique impact of the COVID-19 period rather than a long-term pattern. Outside of this event, the data do not show consistent evidence that higher vacancy corresponds to better affordability or that lower affordability coincides with higher vacancy.
-Different boroughs occupy somewhat distinct regions of the plot, with Staten Island generally appearing more affordable and Manhattan less affordable, but vacancy levels remain low across boroughs in most years. Overall, the figure highlights that affordability challenges in NYC cannot be explained simply by variations in vacancy rates.
+This scatterplot compares borough-level affordability, measured by the weighted rent-to-income ratio, with vacancy rates from 1991 to 2023. Overall, the points show no strong linear relationship between the two variables. Most borough-year observations cluster within a narrow range of affordability and vacancy rates. From the graph, we find that New York City typically experiences high rent burden and low vacancy at the same time, rather than a simple tradeoff between the two.
+
+Manhattan's 2021 observation stands out as a clear outlier, with both unusually high vacancy and high rent burden. This spike likely reflects the unique impact of the COVID-19 period rather than a long-term pattern. Outside of this event, the data do not show consistent evidence that higher vacancy corresponds to better affordability or that lower affordability coincides with higher vacancy.
+
+Different boroughs occupy somewhat distinct regions of the plot, with Staten Island generally appearing more affordable and Manhattan less affordable, but vacancy levels remain low across boroughs in most years.
