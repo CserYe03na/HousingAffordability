@@ -1,5 +1,11 @@
 ## Project Overview
+This project studies housing vacancy and affordability in New York City using data from the NYC Department of Housing Preservation and Development (NYCHVS). The dataset covers the period from 1991 to 2023 and includes information on occupancy status, rent, mortgage payments, household demographic information, and housing characteristics.
 
+We analyze vacancy patterns across years and boroughs, investigate reported reasons for vacancy, and explore the structural characteristics of vacant units using tools such as weighted vacancy rates and principal component analysis. Our findings suggest that most vacant units are unavailable due to renovations, seasonal use, or structural and legal constraints, rather than intentional withholding from the rental market.
+
+In addition, we examine housing affordability across income and demographic groups. The analysis focuses on rent levels, income, housing burden, and rent-income ratios for renters and owners with mortgages. Results show that rent growth has consistently outpaced income growth since the early 1990s, leaving low and middle income renters especially vulnerable, even in an extremely tight housing market. 
+
+In general, this project finds that New York City's housing challenges are driven less by excess vacancy and more by long-term structural constraints, limited rental supply, and a persistent mismatch between rent growth and income growth.
 
 ## Reproducible workflow
 
